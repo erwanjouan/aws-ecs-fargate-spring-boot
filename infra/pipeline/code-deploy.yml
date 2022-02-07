@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: A Java Spring web application deployed with Docker with CodeBuild/Deploy/Pipeline
+Parameters:
+  ProjectName:
+    Type: String
+  ProjectVersion:
+    Type: String
+  LoadBalancerName:
+    Type: String
+  TargetGroupName:
+    Type: String
+  ClusterName:
+    Type: String
+  ServiceName:
+    Type: String
+Resources:
+
+  CodeDeployRole:
+    Description: Service role for CodeDeploy
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - codedeploy.amazonaws.com
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AWSCodeDeployRoleForECS'
+      Path: /
+      RoleName: !Sub 'CodeDeployRole-${ProjectName}'
+    Type: "AWS::IAM::Role"
+
+  CodeDeployApplication:
+    Properties:
+      ComputePlatform: ECS
+      ApplicationName: !Ref ProjectName
+    Type: AWS::CodeDeploy::Application
+
+  CodeDeployDeploymentGroup:
+    Properties:
+      ApplicationName: !Ref CodeDeployApplication
+      BlueGreenDeploymentConfiguration:
+        DeploymentReadyOption:
+          ActionOnTimeout: STOP_DEPLOYMENT
+          WaitTimeInMinutes: 5
+        GreenFleetProvisioningOption:
+          Action: DISCOVER_EXISTING
+        TerminateBlueInstancesOnDeploymentSuccess:
+          Action: TERMINATE  # The action to take on instances in the original environment after a successful blue/green deployment.
+          TerminationWaitTimeInMinutes: 5 # For an Amazon ECS deployment, the number of minutes before deleting the original (blue) task set. During an Amazon ECS deployment, CodeDeploy shifts traffic from the original (blue) task set to a replacement (green) task set.
+      DeploymentConfigName: CodeDeployDefault.AllAtOnce
+      DeploymentGroupName: !Ref ProjectName
+      ECSServices:
+        - ClusterName: !Ref ClusterName
+          ServiceName: !Ref ServiceName
+      LoadBalancerInfo:
+        TargetGroupInfoList:
+          - Name: !Ref TargetGroupName
+      ServiceRoleArn: !GetAtt CodeDeployRole.Arn
+    Type: AWS::CodeDeploy::DeploymentGroup

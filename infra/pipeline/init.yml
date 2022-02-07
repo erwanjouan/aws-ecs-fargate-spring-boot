@@ -1,0 +1,24 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: A Java Spring web application deployed with Docker with CodeBuild/Deploy/Pipeline
+Parameters:
+  ProjectName:
+    Type: String
+  ProjectVersion:
+    Type: String
+  TemplateBucketName:
+    Type: String
+Resources:
+  TemplateBucket:
+    Properties:
+      BucketName: !Ref 'TemplateBucketName'
+    Type: AWS::S3::Bucket
+  ImageRegistry:
+    Description: ECR registry
+    Properties:
+      RepositoryName: !Ref 'ProjectName'
+    Type: AWS::ECR::Repository
+Outputs:
+  ImageRegistry:
+    Value: !Ref 'ImageRegistry'
+  TemplateBucket:
+    Value: !Ref 'TemplateBucket'

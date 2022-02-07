@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Global deployment template with nested stacks for Spring boot on ECS
+Parameters:
+  ProjectName:
+    Type: String
+  ProjectVersion:
+    Type: String
+  TemplateBucketName:
+    Type: String
+Resources:
+  InfraStack:
+    Properties:
+      TemplateURL: !Sub 'https://${TemplateBucketName}.s3.eu-west-1.amazonaws.com/infra.yml'
+      Parameters:
+        ProjectName: !Ref ProjectName
+        ProjectVersion: !Ref ProjectVersion
+    Type: AWS::CloudFormation::Stack
+  CodeDeployStack:
+    Properties:
+      TemplateURL: !Sub 'https://${TemplateBucketName}.s3.eu-west-1.amazonaws.com/code-deploy.yml'
+      Parameters:
+        ProjectName: !Ref 'ProjectName'
+        ProjectVersion: !Ref 'ProjectVersion'
+        LoadBalancerName: !GetAtt [ InfraStack, Outputs.LoadBalancerName ]
+        TargetGroupName: !GetAtt [ InfraStack, Outputs.TargetGroupName ]
+        ClusterName: !GetAtt [ InfraStack, Outputs.ClusterName ]
+        ServiceName: !GetAtt [ InfraStack, Outputs.ServiceName ]
+    Type: AWS::CloudFormation::Stack

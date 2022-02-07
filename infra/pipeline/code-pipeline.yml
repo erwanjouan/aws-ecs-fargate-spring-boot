@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: A Java Spring web application deployed with Docker with CodeBuild/Deploy/Pipeline
+Parameters:
+  ProjectName:
+    Type: String
+  ProjectVersion:
+    Type: String
+  ArtifactBucketName:
+    Type: String
+Resources:
+  CodePipelineRole:
+    Description: Role for CodePipeline
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AWSCodePipeline_FullAccess'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonS3FullAccess'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess'
+      Path: /
+      RoleName: !Sub 'CodePipelineRole-${ProjectName}-Java-Docker'
+    Type: AWS::IAM::Role
+  S3Bucket:
+    Description: Creating Amazon S3 bucket for AWS CodePipeline artifacts
+    Properties:
+      BucketName: !Ref 'ArtifactBucketName'
+      Tags:
+        - Key: Name
+          Value: !Ref 'ProjectName'
+      VersioningConfiguration:
+        Status: Enabled
+    Type: AWS::S3::Bucket
+  ProjectPipeline:
+    Description: Creating a deployment pipeline for your project in AWS CodePipeline
+    Properties:
+      Name: !Sub '${ProjectName}-${ProjectVersion}'
+      RoleArn: !GetAtt 'CodePipelineRole.Arn'
+      ArtifactStore:
+        Location: !Ref 'S3Bucket'
+        Type: S3
+      Stages:
+        - Name: SourceStage
+          Actions:
+          - Name: ECR
+            ActionTypeId:
+              Category: Source
+              Owner: AWS
+              Provider: ECR
+              Version: 1
+            OutputArtifacts:
+              -  Name: !Ref 'S3Bucket'
+            Configuration:
+              RepositoryName: !Ref ProjectName
+              ImageTag: latest
+        - Name: DeployStage
+          Actions:
+          - Name: CodeDeploy
+            ActionTypeId:
+              Category: Deploy
+              Owner: AWS
+              Provider: CodeDeploy
+              Version: 1
+            Configuration:
+              ProjectName: !Ref 'ProjectName'
+            InputArtifacts:
+              - Name: !Ref 'S3Bucket'
+            OutputArtifacts:
+              - Name: !Sub '${ProjectName}-BuildArtifact'
+    Type: AWS::CodePipeline::Pipeline

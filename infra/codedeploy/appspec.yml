@@ -1,0 +1,6 @@
+version: 0.0
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: "/Users/erwanjouan/go/bin:/Users/erwanjouan/bin:/usr/local/bin:/Users/erwanjouan/Development/tool/apache-maven-3.6.3/bin:/Users/erwanjouan/Development/tool/apache-jmeter-5.3/bin:/Users/erwanjouan/Development/tool/idea_launcher:/Users/erwanjouan/Library/Python/3.9/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/TeX/texbin:/opt/X11/bin:/Users/erwanjouan/go/bin:/Users/erwanjouan/bin:/Users/erwanjouan/Development/tool/apache-maven-3.6.3/bin:/Users/erwanjouan/Development/tool/apache-jmeter-5.3/bin:/Users/erwanjouan/Development/tool/idea_launcher:/Users/erwanjouan/Library/Python/3.9/bin:/Users/erwanjouan/Library/Android/sdk/tools/bin:/Users/erwanjouan/Library/Android/sdk/platform-tools:/Users/erwanjouan/Library/Android/sdk/emulator:/Users/erwanjouan/Library/Android/sdk/tools/bin:/Users/erwanjouan/Library/Android/sdk/platform-tools:/Users/erwanjouan/Library/Android/sdk/emulator"
